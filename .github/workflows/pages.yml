@@ -1,0 +1,44 @@
+# Publishes the site without anyone touching the Pages settings screen.
+#
+# The branch-and-folder dropdowns on that screen are easy to get wrong and, when
+# Source is set to "GitHub Actions", they are not shown at all. This workflow is
+# that Source: configure-pages turns Pages on if it is off, and deploy-pages
+# publishes the repository as-is. The site is one static file at the root, so
+# there is nothing to build.
+name: Deploy site to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it; a half-published site
+# is worse than a slightly stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
