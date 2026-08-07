@@ -24,8 +24,8 @@ never leaves the tab.
 
 ## What this repo is
 
-The published static build only: `docs/index.html`, one file, no dependencies,
-no build step, no tracking. It is generated from the full application with
+The published static build only: `index.html`, one file, no dependencies, no
+build step, no tracking. It is generated from the full application with
 
     python build_share.py docs
 
@@ -37,6 +37,9 @@ here. This is the half that runs in a browser and needs nothing.
 Rebuild, copy the one file over, commit, push:
 
     python build_share.py docs
-    cp docs/index.html ../style-engine-site/docs/index.html
+    cp docs/index.html ../style-engine-site/index.html
 
-GitHub Pages serves the `/docs` folder on the `main` branch.
+GitHub Pages serves the repository root of the `main` branch. The file sits at
+the root rather than in `/docs` for a boring but real reason: root is the
+default in the Pages settings, so publishing needs no second dropdown and there
+is one less thing to set wrong.
