@@ -116,7 +116,8 @@ a{color:var(--accent)}
 .home:hover{color:var(--accent)}
 .home svg{width:1em;height:1em}
 .bar-right{display:flex;align-items:center;gap:16px}
-.bar-shop{font:600 14px/1 var(--sans);color:var(--ink-2);text-decoration:none}
+.bar-shop{font:600 14px/1 var(--sans);color:var(--ink-2);text-decoration:none;
+  display:inline-flex;align-items:center;min-height:34px;padding:0 4px}
 .bar-shop:hover{color:var(--accent)}
 .bar-try{font:600 14px/1 var(--sans);color:var(--ground);background:var(--accent);
   padding:9px 16px;border-radius:999px;text-decoration:none;white-space:nowrap}
@@ -164,9 +165,10 @@ footer{border-top:1px solid var(--line);padding:clamp(34px,7vw,56px) var(--gutte
   color:var(--ink-3);font-size:14px}
 .foot-in{max-width:760px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 26px;
   justify-content:space-between}
-footer a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line)}
+footer a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line);
+  display:inline-flex;align-items:center;min-height:26px}
 footer a:hover{color:var(--accent);border-bottom-color:currentColor}
-.foot-nav{display:flex;gap:20px;flex-wrap:wrap}
+.foot-nav{display:flex;gap:14px 22px;flex-wrap:wrap;align-items:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 """
 
@@ -188,6 +190,11 @@ def page(slug, title, eyebrow, stamp, body, description):
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{html.escape(title)} — Style Engine</title>
 <meta name="description" content="{html.escape(description)}">
+<meta property="og:title" content="{html.escape(title)} — Style Engine">
+<meta property="og:description" content="{html.escape(description)}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://lpbrochu03-cmd.github.io/style-engine/assets/poster-01.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{ICON}">
 <style>{CSS}</style>
 </head>

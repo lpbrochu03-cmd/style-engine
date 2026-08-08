@@ -1,0 +1,5 @@
+# Everything here is meant to be found.
+User-agent: *
+Allow: /
+
+Sitemap: https://lpbrochu03-cmd.github.io/style-engine/sitemap.xml
