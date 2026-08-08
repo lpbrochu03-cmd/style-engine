@@ -360,7 +360,18 @@
 
   /* ============ app shell ============ */
   .shell { display: grid; grid-template-columns: 232px minmax(0,1fr); min-height: 100vh; max-width: 1240px; margin: 0 auto; }
-  .rail { border-right: 1px solid var(--line); padding: 28px 20px; display: flex; flex-direction: column; gap: 28px; }
+  /* Sticky, because the Mirror is a long page and the rail is the only way
+     between panels. Left static, scrolling down past the first histogram took
+     the mark and every nav button off the top of the screen, and getting to
+     Draft Feedback meant scrolling all the way back up to find out it was
+     still there. It reads as the app losing its name halfway through. */
+  .rail {
+    border-right: 1px solid var(--line); padding: 28px 20px;
+    display: flex; flex-direction: column; gap: 28px;
+    position: sticky; top: 0; align-self: start;
+    max-height: 100svh; overflow-y: auto;
+    background: var(--ground); z-index: 5;
+  }
   .brand { display: flex; align-items: center; gap: 9px; }
   .brand .ruler { width: 24px; height: 24px; }
   .brand h1 { font-family: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; }
@@ -862,7 +873,14 @@
   }
   @media (max-width: 780px) {
     .shell { grid-template-columns: 1fr; }
-    .rail { border-right: 0; border-bottom: 1px solid var(--line); flex-direction: row; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 18px; }
+    /* Lying down, it is a header rather than a column, so it has to stop
+       being tall enough to scroll inside itself and just stick to the top. */
+    .rail {
+      border-right: 0; border-bottom: 1px solid var(--line);
+      flex-direction: row; flex-wrap: wrap; align-items: center;
+      gap: 14px; padding: 16px 18px;
+      max-height: none; overflow-y: visible; z-index: 20;
+    }
     .nav { flex-direction: row; flex-wrap: wrap; } .nav .tally { display: none; }
     /* The rail lies down at this width, and .rail-actions turned into a row
        with it — but a flex row stretches its children to the tallest one, and
