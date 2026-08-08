@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <title>Style Engine</title>
 <script>window.STYLE_ENGINE_SHARE = true;</script>
+<script>window.STYLE_ENGINE_PAGES = "..";</script>
 
 
 <script>
@@ -1130,8 +1131,8 @@
       <div id="acct" class="acct"></div>
     </div>
     <p class="rail-note">Reads your own work and reports what it finds. Generates nothing on your behalf and submits nothing anywhere.<br>
-      <a href="/privacy" target="_blank" rel="noopener">Privacy</a> &middot;
-      <a href="/terms" target="_blank" rel="noopener">Terms</a></p>
+      <a href="/privacy" data-legal="/privacy" target="_blank" rel="noopener">Privacy</a> &middot;
+      <a href="/terms" data-legal="/terms" target="_blank" rel="noopener">Terms</a></p>
   </nav>
 
   <main class="main">
@@ -1333,6 +1334,26 @@ if (API_BASE) {
 // For links, not fetches: /privacy, /terms and /store are pages the server
 // renders, so on a static host they exist only over at the backend.
 const serverUrl = path => API_BASE + path;
+
+/* Privacy and Terms are the exception to that. The site carrying a shared build
+   publishes them as its own static pages, so they exist even where no backend
+   does — and a build with no --api still has to reach them, which serverUrl()
+   alone cannot do: it returns "/privacy", and on a project site that is the
+   host's 404, not ours. build_share.py sets the base ("../" for the copy that
+   sits in /app/ beside them); with nothing set we fall back to the server's own
+   routes, which is what the copy you run locally wants. Every legal link goes
+   through here, because "for 13 and over" printed beside a dead Privacy link is
+   worse than printing neither. */
+const PAGES_BASE = String(window.STYLE_ENGINE_PAGES || "").replace(/\/+$/, "");
+const legalUrl = path => PAGES_BASE ? `${PAGES_BASE}${path}/` : serverUrl(path);
+
+// The two in the document itself, rather than in a template — swept once on
+// arrival. They keep the server-route href in the markup so that the local app
+// is right even if this never runs. applyShareMode() rewrites that whole note
+// on a shared build, so this is the local app's path; the rule is still that no
+// legal link anywhere resolves without going through legalUrl.
+const wireLegalLinks = () =>
+  document.querySelectorAll("a[data-legal]").forEach(a => { a.href = legalUrl(a.dataset.legal); });
 
 /* ================= ENGINE (ported from features.py / segment.py) ================= */
 const VERDICT = new Set(["yes","no","maybe","sort","kind","it","because","definitely","probably","not","i"]);
@@ -2050,8 +2071,8 @@ function renderAccount(message, bad){
     <p class="msg">Right now it's saved in this browser only. Add an email and it follows you to any device &mdash; no password.</p>
     <input id="acctEmail" type="email" placeholder="you@example.com" autocomplete="email" spellcheck="false">
     <button class="small-link" id="acctIn">Email me a sign-in link</button>
-    <p class="msg">For 13 and over. <a href="/privacy" target="_blank" rel="noopener">Privacy</a>
-      &middot; <a href="/terms" target="_blank" rel="noopener">Terms</a></p>${note}`;
+    <p class="msg">For 13 and over. <a href="${legalUrl("/privacy")}" target="_blank" rel="noopener">Privacy</a>
+      &middot; <a href="${legalUrl("/terms")}" target="_blank" rel="noopener">Terms</a></p>${note}`;
   $("#acctIn").addEventListener("click", sendSigninLink);
   $("#acctEmail").addEventListener("keydown", e => { if (e.key === "Enter") sendSigninLink(); });
 }
@@ -2633,8 +2654,8 @@ function waitlistCard(host, copy){
       </div>
       <p class="wl-count" id="wlCount"></p>
       <p class="wl-count">Your address is used to send you a key and nothing else. For 13 and over.
-        <a href="${serverUrl("/privacy")}" target="_blank" rel="noopener">Privacy</a> &middot;
-        <a href="${serverUrl("/terms")}" target="_blank" rel="noopener">Terms</a></p>
+        <a href="${legalUrl("/privacy")}" target="_blank" rel="noopener">Privacy</a> &middot;
+        <a href="${legalUrl("/terms")}" target="_blank" rel="noopener">Terms</a></p>
     </div>`;
 
   const submit = async () => {
@@ -3445,18 +3466,24 @@ function applyShareMode(){
 
   const note = document.querySelector(".rail-note");
   if (note && !API_BASE){
-    // True only while nothing is wired up: with no backend the page really is
-    // the whole program, so there is no privacy page to link and no claim to
-    // qualify.
+    // Still true with nothing wired up: the page is the whole program, so there
+    // is no claim to qualify. "No backend" stopped meaning "no pages to link",
+    // though, and that gap shipped — the app on the live site offered no route
+    // to Privacy or Terms at all, because this branch replaced the only pair in
+    // the markup and put nothing back. A site carrying this build publishes
+    // both beside it; PAGES_BASE is how we know.
     note.textContent = "Reads your own writing and reports what it finds. Everything happens in this tab — nothing is uploaded, stored, or sent anywhere.";
+    if (PAGES_BASE) note.insertAdjacentHTML("beforeend",
+      `<br><a href="${legalUrl("/privacy")}" target="_blank" rel="noopener">Privacy</a> ` +
+      `&middot; <a href="${legalUrl("/terms")}" target="_blank" rel="noopener">Terms</a>`);
   } else if (note){
     // The Mirror still computes in the tab. But the page can now send an
     // address, so the sentence that said nothing leaves has to stop saying it,
     // and the two pages that explain what happens to it have to be reachable.
     note.innerHTML = `Reads your own writing and reports what it finds, in this tab &mdash;
       your writing is never uploaded. Only an address you type is, and only if you ask for access.<br>
-      <a href="${serverUrl("/privacy")}" target="_blank" rel="noopener">Privacy</a> &middot;
-      <a href="${serverUrl("/terms")}" target="_blank" rel="noopener">Terms</a>`;
+      <a href="${legalUrl("/privacy")}" target="_blank" rel="noopener">Privacy</a> &middot;
+      <a href="${legalUrl("/terms")}" target="_blank" rel="noopener">Terms</a>`;
   }
 
   // The page that spreads is the one that has to be able to ask. Locally the
@@ -3563,6 +3590,7 @@ addEventListener("keydown", e => {
 });
 
 applyShareMode();
+wireLegalLinks();
 wire();
 // Read on arrival, not at submit. Someone lands from a TikTok link, measures
 // their writing, clicks around, and only then asks for access — by which point
