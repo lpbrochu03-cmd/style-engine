@@ -24,22 +24,29 @@ never leaves the tab.
 
 ## What this repo is
 
-The published static build only: `index.html`, one file, no dependencies, no
-build step, no tracking. It is generated from the full application with
+Two pages and the pictures between them:
 
-    python build_share.py docs
+    index.html      the landing page — hand-written, no dependencies, no fonts
+                    fetched, no analytics
+    app/index.html  the app itself, generated from the full application
+    assets/         the poster stills and the film
+
+No web fonts is a decision rather than an omission. The page's whole claim is
+that nothing is sent anywhere, and a page that loads a font from a third party
+tells every visitor's browser to announce itself to that third party first.
 
 The application's server half — the model calls, billing, accounts — is not
 here. This is the half that runs in a browser and needs nothing.
 
 ## Publishing an update
 
-Rebuild, copy the one file over, commit, push:
+Rebuild the app half, copy the one file over, commit, push:
 
     python build_share.py docs
-    cp docs/index.html ../style-engine-site/index.html
+    cp docs/index.html ../style-engine-site/app/index.html
 
-GitHub Pages serves the repository root of the `main` branch. The file sits at
-the root rather than in `/docs` for a boring but real reason: root is the
-default in the Pages settings, so publishing needs no second dropdown and there
-is one less thing to set wrong.
+The landing page is edited directly; it is not generated from anything.
+
+Pages deploys from `.github/workflows/pages.yml` on every push to `main`, so
+the branch and folder dropdowns in the Pages settings screen do not need to be
+set at all.
