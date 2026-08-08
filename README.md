@@ -29,7 +29,15 @@ Two pages and the pictures between them:
     index.html      the landing page — hand-written, no dependencies, no fonts
                     fetched, no analytics
     app/index.html  the app itself, generated from the full application
+    pricing/        what things cost, generated from store.json
+    privacy/        generated from the app's PRIVACY.md
+    terms/          generated from the app's TERMS.md
     assets/         the poster stills and the film
+
+The three generated pages are built by `python build_pages.py`. Privacy and
+Terms are not written here — they are written once as markdown in the app's
+repo and rendered from it, because two copies of a promise about someone's
+writing is one copy too many. The day they disagree, one of them is a lie.
 
 No web fonts is a decision rather than an omission. The page's whole claim is
 that nothing is sent anywhere, and a page that loads a font from a third party

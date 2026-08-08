@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Terms — Style Engine</title>
+<meta name="description" content="What Style Engine is, what it will not do, and the rules for using it.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314160f'/%3E%3Cpath d='M3 20 L8 20 L10 9 L13 25 L16 14 L19 22 L22 17 L25 20 L29 20' fill='none' stroke='%2374c491' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --ground:#14160f;--surface:#1c1e16;--ink:#ecefe0;--ink-2:#b4b8a4;--ink-3:#7f8472;
+  --line:#2f3325;--accent:#74c491;--amber:#d2a54c;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Consolas,"Liberation Mono",monospace;
+  --gutter:clamp(20px,5.5vw,64px);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:clamp(16px,1.02rem+.2vw,18px);line-height:1.68;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+.bar{position:sticky;top:0;z-index:5;background:rgba(20,22,15,.86);
+  backdrop-filter:blur(9px);border-bottom:1px solid var(--line)}
+.bar-in{max-width:760px;margin:0 auto;padding:14px var(--gutter);
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.home{font-family:var(--mono);font-size:12px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink-2);text-decoration:none;display:inline-flex;align-items:center;gap:.6em}
+.home:hover{color:var(--accent)}
+.home svg{width:1em;height:1em}
+.bar-try{font:600 14px/1 var(--sans);color:var(--ground);background:var(--accent);
+  padding:9px 16px;border-radius:999px;text-decoration:none;white-space:nowrap}
+.bar-try:hover{background:#8ad4a5}
+
+main{max-width:760px;margin:0 auto;padding:clamp(48px,10vw,96px) var(--gutter) clamp(60px,12vw,120px)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 1.3em;display:flex;align-items:center;gap:.75em}
+.eyebrow::before{content:"";width:clamp(18px,6vw,34px);height:2px;background:var(--amber);flex:none}
+h1{font-weight:800;font-size:clamp(2.3rem,8vw,3.6rem);line-height:1;letter-spacing:-.038em;
+  margin:0 0 .5em;text-wrap:balance}
+.stamp{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);margin:0 0 2.6em;
+  padding-bottom:1.6em;border-bottom:1px solid var(--line)}
+h2{font-weight:750;font-size:clamp(1.32rem,4.6vw,1.72rem);line-height:1.18;letter-spacing:-.02em;
+  margin:2.5em 0 .7em}
+h2:first-of-type{margin-top:0}
+h3{font-weight:700;font-size:1.1rem;margin:2em 0 .5em}
+p{margin:0 0 1.15em}
+strong{color:var(--ink);font-weight:650}
+em{color:var(--ink-2)}
+code{font-family:var(--mono);font-size:.9em;background:var(--surface);
+  border:1px solid var(--line);border-radius:5px;padding:.12em .42em}
+ul{margin:0 0 1.3em;padding-left:1.15em}
+li{margin-bottom:.5em}
+li::marker{color:var(--accent)}
+
+/* Prices. A row per thing, the number set in the mono face because it is a
+   figure to compare, not a sentence to read. */
+.rows{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.row{border-bottom:1px solid var(--line);padding:clamp(20px,4.6vw,30px) 0;
+  display:grid;gap:.35em .9em;grid-template-columns:1fr auto}
+.row h2{grid-area:1/1/2/2;margin:0;font-size:clamp(1.15rem,4.2vw,1.4rem)}
+.row .price{grid-area:1/2/2/3;font-family:var(--mono);font-size:clamp(1rem,3.6vw,1.15rem);
+  color:var(--ink);white-space:nowrap;align-self:baseline}
+.row .price small{color:var(--ink-3);font-size:.76em}
+.row p{grid-area:2/1/3/3;margin:0;color:var(--ink-2);font-size:.97rem}
+.row .flag{grid-area:3/1/4/3;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--amber);margin-top:.5em}
+
+.note{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:clamp(18px,4vw,26px);margin:0 0 2.4em}
+.note p:last-child{margin-bottom:0}
+
+footer{border-top:1px solid var(--line);padding:clamp(34px,7vw,56px) var(--gutter);
+  color:var(--ink-3);font-size:14px}
+.foot-in{max-width:760px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 26px;
+  justify-content:space-between}
+footer a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line)}
+footer a:hover{color:var(--accent);border-bottom-color:currentColor}
+.foot-nav{display:flex;gap:20px;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <a class="home" href="../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6M11 6l-6 6 6 6"/></svg> Style Engine</a>
+    <a class="bar-try" href="../app/">Measure my writing</a>
+  </div>
+</div>
+
+<main>
+  <p class="eyebrow">Plain terms</p>
+  <h1>Terms</h1>
+  <p class="stamp">Last updated 7 August 2026</p>
+  <h2>What this is</h2>
+<p>Style Engine measures your writing and shows you the patterns in it. Paid features add a model that drafts your own messages in your voice, marks drafts you wrote, and builds practice questions from study material you were given.</p>
+<h2>You need to be 13 or over</h2>
+<p>If you&#x27;re under 13, you can&#x27;t use it. If you&#x27;re under 18, the account and any payment method should belong to a parent or guardian.</p>
+<h2>What it won&#x27;t do</h2>
+<p><strong>It does not write your schoolwork.</strong></p>
+<p>That isn&#x27;t a policy that might loosen later — it&#x27;s what the thing is. Draft Feedback marks a draft <em>you</em> wrote and tells you what to fix; it never writes the essay. Compose drafts your own communications: emails, texts, job and application answers. Test Prep makes practice questions from material your teacher gave you.</p>
+<p>Handing in work you didn&#x27;t write is between you and your school, and this tool is built specifically not to help with it.</p>
+<h2>Using it</h2>
+<p>Don&#x27;t:</p>
+<ul><li>upload writing that isn&#x27;t yours, or that you don&#x27;t have permission to use</li><li>use it to impersonate someone else</li><li>try to break, overload, or work around the rate limits</li><li>resell access or share a license key around</li></ul>
+<p>Rate limits exist because every model-backed request costs real money to serve. Hitting one occasionally is normal. Hitting them constantly looks like a script, and access can be cut off for it.</p>
+<h2>Your writing stays yours</h2>
+<p>You keep every right to what you write and upload. Using Style Engine doesn&#x27;t give me a claim on your words, and they aren&#x27;t used to train anything.</p>
+<p>You&#x27;re responsible for what you put in, and for what you do with what comes out. A draft written in your voice is still your message — read it before you send it.</p>
+<h2>Paying</h2>
+<ul><li>Subscriptions renew monthly or yearly until you cancel.</li><li>Cancel any time from inside the app; access runs to the end of the period</li></ul>
+<p>you&#x27;ve paid for.</p>
+<ul><li>Refunds: ask. If the thing didn&#x27;t work or wasn&#x27;t what you expected, you get</li></ul>
+<p>your money back — I&#x27;d rather that than an unhappy person.</p>
+<ul><li>Prices can change, but not for a period already paid for.</li></ul>
+<h2>The Mirror stays free</h2>
+<p>The Style Mirror runs in your browser and costs nothing to serve. It is free now and it will stay free. Paid features are the ones that cost money per use.</p>
+<h2>No promises about accuracy</h2>
+<p>The measurements are real, and the interpretations are best-effort. A model can be wrong, a rubric score is an opinion, and a predicted test topic is a guess from the material you pasted — not a leaked answer key. Use judgment.</p>
+<p>This is provided as-is, without warranty. It&#x27;s a small independent project run by one person, and it can go down, lose a feature, or change.</p>
+<h2>Ending it</h2>
+<p>You can delete your account and everything in it from inside the app, at any time, without asking. I can close an account that&#x27;s breaking these terms — with an explanation, unless the reason makes that a bad idea.</p>
+<h2>Contact</h2>
+<p>lp.brochu03@gmail.com</p>
+<p>---</p>
+<p><em>Plain-English terms for a small independent project, not a lawyer&#x27;s document.</em></p>
+</main>
+
+<footer>
+  <div class="foot-in">
+    <span>Style Engine</span>
+    <nav class="foot-nav">
+      <a href="../">Home</a>
+      <a href="../pricing/">What it costs</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="../terms/">Terms</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

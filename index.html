@@ -273,6 +273,9 @@ section{padding:clamp(76px,15vw,168px) var(--gutter);position:relative}
 }
 .thing-tag.paid{color:var(--amber)}
 .thing p{margin:0;color:var(--ink-2);font-size:clamp(.98rem,3.4vw,1.06rem)}
+.after-things{margin:clamp(24px,5vw,34px) 0 0;color:var(--ink-3);font-size:clamp(.95rem,3.3vw,1.02rem)}
+.after-things a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(116,196,145,.35)}
+.after-things a:hover{border-bottom-color:currentColor}
 
 /* ---------------------------------------------------------------------------
    Close
@@ -291,6 +294,7 @@ footer{
 }
 footer a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line)}
 footer a:hover{color:var(--accent);border-bottom-color:currentColor}
+.foot-nav{display:flex;gap:18px 26px;flex-wrap:wrap}
 
 /* Scroll reveal, kept to one gesture: content rises a little and arrives.
    Gated behind .js, set by a script in the head. Hiding content by default in
@@ -429,6 +433,8 @@ footer a:hover{color:var(--accent);border-bottom-color:currentColor}
         cover, so revision starts somewhere better than page one.</p>
       </li>
     </ul>
+    <p class="after-things reveal">Pro is $8 a month.
+      <a href="pricing/">What everything costs →</a></p>
   </div>
 </section>
 
@@ -450,7 +456,12 @@ footer a:hover{color:var(--accent);border-bottom-color:currentColor}
 
 <footer>
   <span>Style Engine — built because I wanted to know how I actually write.</span>
-  <span><a href="https://github.com/lpbrochu03-cmd/style-engine">Source on GitHub</a></span>
+  <nav class="foot-nav">
+    <a href="pricing/">What it costs</a>
+    <a href="privacy/">Privacy</a>
+    <a href="terms/">Terms</a>
+    <a href="https://github.com/lpbrochu03-cmd/style-engine">Source</a>
+  </nav>
 </footer>
 
 <script>
