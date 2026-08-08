@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>What it costs — Style Engine</title>
+<title>The shop — Style Engine</title>
 <meta name="description" content="What Style Engine Pro and the other things cost. The Style Mirror is free.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314160f'/%3E%3Cpath d='M3 20 L8 20 L10 9 L13 25 L16 14 L19 22 L22 17 L25 20 L29 20' fill='none' stroke='%2374c491' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
@@ -29,6 +29,9 @@ a{color:var(--accent)}
   color:var(--ink-2);text-decoration:none;display:inline-flex;align-items:center;gap:.6em}
 .home:hover{color:var(--accent)}
 .home svg{width:1em;height:1em}
+.bar-right{display:flex;align-items:center;gap:16px}
+.bar-shop{font:600 14px/1 var(--sans);color:var(--ink-2);text-decoration:none}
+.bar-shop:hover{color:var(--accent)}
 .bar-try{font:600 14px/1 var(--sans);color:var(--ground);background:var(--accent);
   padding:9px 16px;border-radius:999px;text-decoration:none;white-space:nowrap}
 .bar-try:hover{background:#8ad4a5}
@@ -86,13 +89,16 @@ footer a:hover{color:var(--accent);border-bottom-color:currentColor}
 <div class="bar">
   <div class="bar-in">
     <a class="home" href="../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6M11 6l-6 6 6 6"/></svg> Style Engine</a>
-    <a class="bar-try" href="../app/">Measure my writing</a>
+    <span class="bar-right">
+      <a class="bar-shop" href="../pricing/">Shop</a>
+      <a class="bar-try" href="../app/">Measure my writing</a>
+    </span>
   </div>
 </div>
 
 <main>
-  <p class="eyebrow">Prices</p>
-  <h1>What it costs</h1>
+  <p class="eyebrow">Everything for sale</p>
+  <h1>The shop</h1>
   <p class="stamp">Prices are real; the checkout is not open yet.</p>
   <div class="note"><p><strong>Nothing on this page can be bought today.</strong> Payments need an account owned by an adult, and that is not set up yet. The prices are real and they are what these will cost.</p><p>The Style Mirror is free, works now, and stays free.</p></div><ul class="rows"><li class="row"><h2>Style Engine Pro</h2><div class="price">$8 <small>/ month</small></div><p>The paid half of the tool you&#x27;re already using: drafting in your measured voice, model-graded feedback on your drafts, and test prep from your own notes.</p><div class="flag">Not buyable yet</div></li><li class="row"><h2>NOVA HUD</h2><div class="price">$9 <small>once</small></div><p>A sci-fi dashboard in one HTML file. No install, no dependencies, no server — open it and it runs. Clock, pomodoro timer, system readouts, animated rings, and a launch deck of your own links.</p><div class="flag">Not buyable yet</div></li><li class="row"><h2>Window Replacement Estimator</h2><div class="price">$19 <small>once</small></div><p>A quote calculator a contractor can put on their own site. Pick frame material, count the windows, flag the ones above the ground floor, and it prices the job while the customer is still reading.</p><div class="flag">Not buyable yet</div></li><li class="row"><h2>Portfolio Trend Dashboard</h2><div class="price">$14 <small>once</small></div><p>A holdings-over-time dashboard that runs from a file. Switch between asset classes, read the curve, see the table underneath it — no build step, no chart library, no network calls.</p><div class="flag">Not buyable yet</div></li><li class="row"><h2>&quot;11 words a sentence&quot; tee</h2><div class="price">$24 <small>once</small></div><p>My own measured sentence length, printed small on the chest. Nobody will get it. That&#x27;s the point.</p><div class="flag">Not buyable yet</div></li></ul>
 </main>
@@ -102,7 +108,7 @@ footer a:hover{color:var(--accent);border-bottom-color:currentColor}
     <span>Style Engine</span>
     <nav class="foot-nav">
       <a href="../">Home</a>
-      <a href="../pricing/">What it costs</a>
+      <a href="../pricing/">Shop</a>
       <a href="../privacy/">Privacy</a>
       <a href="../terms/">Terms</a>
     </nav>

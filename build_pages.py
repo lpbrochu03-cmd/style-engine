@@ -115,6 +115,9 @@ a{color:var(--accent)}
   color:var(--ink-2);text-decoration:none;display:inline-flex;align-items:center;gap:.6em}
 .home:hover{color:var(--accent)}
 .home svg{width:1em;height:1em}
+.bar-right{display:flex;align-items:center;gap:16px}
+.bar-shop{font:600 14px/1 var(--sans);color:var(--ink-2);text-decoration:none}
+.bar-shop:hover{color:var(--accent)}
 .bar-try{font:600 14px/1 var(--sans);color:var(--ground);background:var(--accent);
   padding:9px 16px;border-radius:999px;text-decoration:none;white-space:nowrap}
 .bar-try:hover{background:#8ad4a5}
@@ -193,7 +196,10 @@ def page(slug, title, eyebrow, stamp, body, description):
 <div class="bar">
   <div class="bar-in">
     <a class="home" href="../">{ARROW} Style Engine</a>
-    <a class="bar-try" href="../app/">Measure my writing</a>
+    <span class="bar-right">
+      <a class="bar-shop" href="../pricing/">Shop</a>
+      <a class="bar-try" href="../app/">Measure my writing</a>
+    </span>
   </div>
 </div>
 
@@ -209,7 +215,7 @@ def page(slug, title, eyebrow, stamp, body, description):
     <span>Style Engine</span>
     <nav class="foot-nav">
       <a href="../">Home</a>
-      <a href="../pricing/">What it costs</a>
+      <a href="../pricing/">Shop</a>
       <a href="../privacy/">Privacy</a>
       <a href="../terms/">Terms</a>
     </nav>
@@ -288,7 +294,7 @@ def build_pricing():
 
     body = note + '<ul class="rows">' + "".join(rows) + "</ul>"
     write("pricing", page(
-        "pricing", "What it costs", "Prices",
+        "pricing", "The shop", "Everything for sale",
         "Prices are real; the checkout is not open yet.",
         body,
         "What Style Engine Pro and the other things cost. The Style Mirror is free."))

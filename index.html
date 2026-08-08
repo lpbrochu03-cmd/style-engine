@@ -73,6 +73,38 @@ a{color:inherit}
 :focus-visible{outline:2.5px solid var(--accent);outline-offset:3px;border-radius:2px}
 
 /* ---------------------------------------------------------------------------
+   Top bar. Deliberately thin and translucent so it sits on the film without
+   competing with it, and it carries the two things a stranger looks for by
+   name: the shop, and the way in.
+--------------------------------------------------------------------------- */
+.topbar{
+  position:sticky;top:0;z-index:10;
+  background:rgba(20,22,15,.72);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{
+  max-width:1120px;margin:0 auto;
+  padding:11px var(--gutter);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.mark{
+  font-family:var(--mono);font-size:clamp(11px,3vw,12.5px);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);
+}
+.topnav{display:flex;align-items:center;gap:clamp(14px,4vw,26px)}
+.topnav a{
+  font:600 clamp(13.5px,3.7vw,15px)/1 var(--sans);
+  color:var(--ink-2);text-decoration:none;
+}
+.topnav a:hover{color:var(--accent)}
+.topnav-try{
+  color:var(--ground)!important;background:var(--accent);
+  padding:9px 16px;border-radius:999px;white-space:nowrap;
+}
+.topnav-try:hover{background:#8ad4a5;color:var(--ground)!important}
+
+/* ---------------------------------------------------------------------------
    Type
 --------------------------------------------------------------------------- */
 .display{
@@ -127,7 +159,9 @@ section{padding:clamp(76px,15vw,168px) var(--gutter);position:relative}
    and nothing needs to be faded to make room. */
 .hero{
   padding:0;
-  min-height:100svh;
+  /* less the bar above it, so the two together are one screen and the page
+     does not open already scrolled by forty pixels */
+  min-height:calc(100svh - 46px);
   display:grid;
   grid-template-rows:minmax(0,1fr) auto;
 }
@@ -135,9 +169,36 @@ section{padding:clamp(76px,15vw,168px) var(--gutter);position:relative}
   grid-area:1/1/2/2;
   position:relative;
   overflow:hidden;
+  display:flex;
+  justify-content:center;
 }
-.hero-media video,.hero-media img{
-  width:100%;height:100%;object-fit:cover;object-position:center;
+/* Takes the film's shape from the film, so nothing has to be cropped to make
+   it fit a window it was never cut for. */
+.hero-frame{
+  position:relative;
+  height:100%;
+  aspect-ratio:1080/1935;
+  max-width:100%;
+  overflow:hidden;
+}
+@media (min-width:900px){
+  .hero-frame{border-radius:18px;border:1px solid var(--line)}
+}
+/* Fitted, never cropped. The film is 9:16, and filling a landscape window with
+   `cover` zooms it until the poster inside it is off-screen entirely — a wide
+   monitor got a near-empty dark rectangle. `contain` keeps it whole at any
+   window, and because its own background is this exact olive the letterboxing
+   is invisible: the page reads as one surface with a film standing in it.
+
+   Positioned absolutely on purpose. Sized with height:100% in normal flow the
+   percentage resolves against the video's own 1935px intrinsic height, so it
+   grew the row it was supposed to fit inside and pushed the headline off the
+   bottom of the screen. Taken out of flow it can only ever be the size of the
+   space it is given. */
+.hero-frame video,.hero-frame img{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
 }
 /* Only the last sliver, so the film meets the page rather than stopping at a
    hard line. The headline sits well above this. */
@@ -155,6 +216,13 @@ section{padding:clamp(76px,15vw,168px) var(--gutter);position:relative}
 .hero-note{
   font-family:var(--mono);font-size:clamp(11.5px,3vw,13px);
   letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2);margin:0;
+}
+/* On a phone the film is full-bleed and the button belongs at the left margin
+   with everything else. On a wide window the film becomes a centred frame, and
+   a button still pinned to the far left reads as belonging to a different
+   page. */
+@media (min-width:900px){
+  .hero-foot{align-items:center;text-align:center}
 }
 
 .cta{
@@ -316,14 +384,31 @@ footer a:hover{color:var(--accent);border-bottom-color:currentColor}
 
 <a class="skip" href="#try">Skip to the app</a>
 
+<!-- There was no navigation at all: everything but the app was reachable only
+     by scrolling to the very bottom, which is a fine way to hide a shop. -->
+<div class="topbar">
+  <div class="topbar-in">
+    <span class="mark">Style Engine</span>
+    <nav class="topnav">
+      <a href="pricing/">Shop</a>
+      <a class="topnav-try" href="app/">Try it free</a>
+    </nav>
+  </div>
+</div>
+
 <!-- ===================================================================== -->
 <header class="hero">
   <div class="hero-media">
-    <video autoplay muted loop playsinline poster="assets/poster-01.jpg"
-           aria-label="The words of an essay lifting off the page and forming a rhythm line">
-      <source src="assets/ad-01.mp4" type="video/mp4">
-      <img src="assets/poster-01.jpg" alt="See how you actually write — Style Engine">
-    </video>
+    <!-- The frame carries the film's own 9:16 shape, so on a wide window the
+         letterboxing becomes an intentional edge instead of a seam where two
+         nearly-identical darks meet. -->
+    <div class="hero-frame">
+      <video autoplay muted loop playsinline poster="assets/poster-01.jpg"
+             aria-label="The words of an essay lifting off the page and forming a rhythm line">
+        <source src="assets/ad-01.mp4" type="video/mp4">
+        <img src="assets/poster-01.jpg" alt="See how you actually write — Style Engine">
+      </video>
+    </div>
   </div>
   <div class="hero-foot">
     <p class="hero-note">Free · runs in your browser</p>
@@ -434,7 +519,7 @@ footer a:hover{color:var(--accent);border-bottom-color:currentColor}
       </li>
     </ul>
     <p class="after-things reveal">Pro is $8 a month.
-      <a href="pricing/">What everything costs →</a></p>
+      <a href="pricing/">See everything in the shop →</a></p>
   </div>
 </section>
 
@@ -457,7 +542,7 @@ footer a:hover{color:var(--accent);border-bottom-color:currentColor}
 <footer>
   <span>Style Engine — built because I wanted to know how I actually write.</span>
   <nav class="foot-nav">
-    <a href="pricing/">What it costs</a>
+    <a href="pricing/">Shop</a>
     <a href="privacy/">Privacy</a>
     <a href="terms/">Terms</a>
     <a href="https://github.com/lpbrochu03-cmd/style-engine">Source</a>
