@@ -14,6 +14,7 @@ import html
 import json
 import os
 import re
+import shutil
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -153,8 +154,17 @@ li::marker{color:var(--accent)}
 .row .price{grid-area:1/2/2/3;font-family:var(--mono);font-size:clamp(1rem,3.6vw,1.15rem);
   color:var(--ink);white-space:nowrap;align-self:baseline}
 .row .price small{color:var(--ink-3);font-size:.76em}
-.row p{grid-area:2/1/3/3;margin:0;color:var(--ink-2);font-size:.97rem}
-.row .flag{grid-area:3/1/4/3;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+/* The picture sits between the price and the description: it is the fastest
+   answer to "what is this", and a screenshot below the copy is a screenshot
+   nobody scrolls to. Width and height are on the tag so the row does not
+   jump when it loads. */
+.row .shot{grid-area:2/1/3/3;display:block;margin:.2em 0 .95em;max-width:560px;
+  border:1px solid var(--line);border-radius:4px;overflow:hidden;line-height:0}
+.row .shot img{display:block;width:100%;height:auto;max-height:290px;
+  object-fit:cover;object-position:top left}
+.row .shot:hover{border-color:var(--ink-3)}
+.row p{grid-area:3/1/4/3;margin:0;color:var(--ink-2);font-size:.97rem}
+.row .flag{grid-area:4/1/5/3;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--amber);margin-top:.5em}
 
 .note{background:var(--surface);border:1px solid var(--line);border-radius:12px;
@@ -265,24 +275,64 @@ def money(cents, currency):
     return f"{sym}{cents/100:,.2f}".rstrip("0").rstrip(".") if cents % 100 else f"{sym}{cents//100}"
 
 
+def copy_shop_pictures(wanted):
+    """Bring the shelf's pictures over from the app repo into assets/shop/.
+
+    Copied rather than linked, because this repo is what gets served and the
+    app repo is not published. Only the files the page actually references are
+    copied: the folder next door is a working directory, and a build step that
+    hoovers up whatever is in it publishes drafts.
+    """
+    if not wanted:
+        return []
+    src = os.path.join(APP, "shop")
+    dst = os.path.join(HERE, "assets", "shop")
+    os.makedirs(dst, exist_ok=True)
+    copied = []
+    for name in sorted(wanted):
+        found = os.path.join(src, name)
+        if not os.path.isfile(found):
+            # Loud, because the alternative is a broken frame on the public
+            # page and a build that said "done."
+            print(f"  MISSING picture: shop/{name} — the row will have no image")
+            continue
+        shutil.copyfile(found, os.path.join(dst, name))
+        copied.append(name)
+    return copied
+
+
 def build_pricing():
     data = json.load(open(os.path.join(APP, "store.json"), encoding="utf-8"))
+    shown = [p for p in data["products"]
+             if p.get("shelf") == "main" and p.get("status") != "hidden"]
+    have = set(copy_shop_pictures({p["image"] for p in shown if p.get("image")}))
     rows = []
-    for p in data["products"]:
-        # The back room is reached by typing its name into the app. Listing its
-        # shelf on a public price page would be publishing the secret.
-        if p.get("shelf") != "main" or p.get("status") == "hidden":
-            continue
-
+    # The back room is reached by typing its name into the app. Listing its
+    # shelf on a public price page would be publishing the secret — `shown` is
+    # filtered on the way in, above.
+    for p in shown:
         price = money(p["price"], p.get("currency", "usd"))
         unit = " <small>/ month</small>" if "subscription" in p.get("tags", []) else " <small>once</small>"
         flag = "" if p.get("status") == "live" else (
             '<div class="flag">Not buyable yet</div>')
 
+        # Only if the file actually came across. A row with no picture is the
+        # design, not a fallback; a row with a picture that 404s is neither.
+        shot = ""
+        if p.get("image") in have:
+            alt = html.escape(f'{p["name"]}, as it looks when you open it')
+            # `../` because this page is written to pricing/index.html, so a bare
+            # "assets/..." asks for pricing/assets/... and gets the 404 page.
+            # The same climb the nav links in this file already make.
+            shot = (f'<a class="shot" href="../assets/shop/{p["image"]}">'
+                    f'<img src="../assets/shop/{p["image"]}" alt="{alt}" '
+                    f'loading="lazy" decoding="async" width="1200" height="750"></a>')
+
         rows.append(
             '<li class="row">'
             f'<h2>{html.escape(p["name"])}</h2>'
             f'<div class="price">{price}{unit}</div>'
+            f'{shot}'
             f'<p>{html.escape(p.get("blurb", ""))}</p>'
             f'{flag}'
             '</li>'
