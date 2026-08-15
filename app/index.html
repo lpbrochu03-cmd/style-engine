@@ -1618,31 +1618,76 @@ async function inflateRaw(bytes){
   const stream = new Response(bytes).body.pipeThrough(ds);
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
-async function readDocx(file){
-  const buf = new Uint8Array(await file.arrayBuffer());
-  const dv = new DataView(buf.buffer);
+// Walk a zip's central directory. A .docx IS a zip, and so is a Drive/Takeout
+// export full of .docx files, so the same walker reads both — the only
+// difference is which entries we then care about.
+function zipEntries(buf){
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
   // Find End Of Central Directory (signature 0x06054b50), scanning from the tail.
   let eocd = -1;
   for (let i=buf.length-22; i>=0; i--){ if (dv.getUint32(i,true)===0x06054b50){ eocd=i; break; } }
   if (eocd<0) throw new Error("not a zip");
-  let cd = dv.getUint32(eocd+16,true), count = dv.getUint16(eocd+10,true), p = cd;
+  let count = dv.getUint16(eocd+10,true), p = dv.getUint32(eocd+16,true);
+  const out = [];
   for (let i=0;i<count;i++){
-    if (dv.getUint32(p,true)!==0x02014b50) break;
+    if (p+46 > buf.length || dv.getUint32(p,true)!==0x02014b50) break;
     const method = dv.getUint16(p+10,true);
     const compSize = dv.getUint32(p+20,true);
     const nameLen = dv.getUint16(p+28,true), extraLen = dv.getUint16(p+30,true), commLen = dv.getUint16(p+32,true);
     const lho = dv.getUint32(p+42,true);
     const name = new TextDecoder().decode(buf.subarray(p+46, p+46+nameLen));
-    if (name==="word/document.xml"){
-      const lNameLen = dv.getUint16(lho+26,true), lExtra = dv.getUint16(lho+28,true);
-      const dataStart = lho+30+lNameLen+lExtra;
-      const comp = buf.subarray(dataStart, dataStart+compSize);
-      const xmlBytes = method===0 ? comp : await inflateRaw(comp);
-      return new TextDecoder().decode(xmlBytes);
-    }
+    out.push({ name, method, compSize, lho });
     p += 46+nameLen+extraLen+commLen;
   }
+  return out;
+}
+// The payload can only be located through the local header: it repeats the name
+// and extra fields at its own lengths, and the extra field is routinely a
+// different size there than in the central directory.
+async function zipEntryBytes(buf, e){
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const lNameLen = dv.getUint16(e.lho+26,true), lExtra = dv.getUint16(e.lho+28,true);
+  const dataStart = e.lho+30+lNameLen+lExtra;
+  const comp = buf.subarray(dataStart, dataStart+e.compSize);
+  if (e.method===0) return comp;
+  if (e.method!==8) throw new Error("unsupported compression");
+  return inflateRaw(comp);
+}
+async function readDocx(file){
+  const buf = new Uint8Array(await file.arrayBuffer());
+  return docxXmlFromBytes(buf);
+}
+async function docxXmlFromBytes(bytes){
+  for (const e of zipEntries(bytes)){
+    if (e.name==="word/document.xml") return new TextDecoder().decode(await zipEntryBytes(bytes, e));
+  }
   throw new Error("no document.xml");
+}
+// A Drive/Takeout .zip, read here rather than uploaded. The dropzone has always
+// invited one; before this it reached file.text(), which decodes zip bytes as
+// UTF-8 without throwing, so a stranger's whole export was measured as binary
+// noise instead of their writing.
+async function readZipArchive(file){
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const docs = [];
+  for (const e of zipEntries(buf)){
+    const name = e.name;
+    if (name.endsWith("/") || name.startsWith("__MACOSX/")) continue;
+    const base = name.split("/").pop();
+    if (!base || base.startsWith("~$") || base.startsWith(".")) continue;  // Word lock files, dotfiles
+    const ext = ((base.match(/\.([a-z0-9]+)$/i)||[])[1]||"").toLowerCase();
+    if (ext!=="docx" && ext!=="txt" && ext!=="md") continue;   // exports carry pdfs and photos too
+    try {
+      const bytes = await zipEntryBytes(buf, e);
+      // .slice() so the nested zip is parsed on a buffer of its own — a
+      // subarray's offsets are not the offsets its central directory records.
+      const text = ext==="docx"
+        ? docxXmlToText(await docxXmlFromBytes(bytes.slice()))
+        : new TextDecoder().decode(bytes);
+      if (text.trim()) docs.push({ name: base, text });
+    } catch(err){ /* one unreadable member shouldn't cost the other fifty */ }
+  }
+  return docs;
 }
 function docxXmlToText(xml){
   // Each <w:p> is a paragraph; text lives in <w:t> runs.
@@ -2963,7 +3008,7 @@ function renderMirror(p, animate){
   // so the panel says which one did rather than letting the reader assume.
   const engineRun = p.source==="server" || p.source==="saved";
   $("#mirrorProvenance").innerHTML = p.source==="example"
-    ? `<b>Example</b> &mdash; a validated corpus, computed by the Python engine`
+    ? `<b>Example</b> &mdash; a validated corpus, measured in advance and baked into this page`
     : engineRun
     ? `<b>Measured</b> &mdash; computed by the engine on your machine, ${p.segmentation==="llm"
         ? `prompts separated by the model` : `prompts separated by pattern rules`}${
@@ -2991,7 +3036,7 @@ function renderMirror(p, animate){
     <div class="tiles">
       <div class="tile"><span class="label">Burstiness</span><span class="value" data-count="${p.burstiness}" data-dec="2">0</span><span class="unit">length variation</span></div>
       <div class="tile"><span class="label">Lexical range</span><span class="value" data-count="${p.mtld}" data-dec="0">0</span><span class="unit">MTLD</span></div>
-      <div class="tile"><span class="label">Verdict first</span><span class="value">${p.verdict_first_rate!=null?`<span data-count="${p.verdict_first_rate}" data-dec="0">0</span><span class="unit">%</span>`:"&mdash;"}</span><span class="unit">of answers</span></div>
+      <div class="tile"><span class="label">Verdict first</span><span class="value">${p.verdict_first_rate!=null?`<span data-count="${p.verdict_first_rate}" data-dec="0">0</span><span class="unit">%</span>`:"&mdash;"}</span><span class="unit">${p.verdict_first_rate!=null?"of answers":"needs Q&amp;A writing"}</span></div>
     </div>`;
 
   const hist = `
@@ -3018,7 +3063,7 @@ function renderMirror(p, animate){
       <div class="phrases">${p.tics.map(t=>`<span class="phrase">${esc(t.phrase)} <span class="count">${t.docs} doc${t.docs>1?"s":""}</span></span>`).join("")}</div></div>` : "";
 
   const typos = e.liveLimited
-    ? `<div class="card reveal"><h3>Misspellings</h3><p class="sub">needs the full dictionary</p><p class="readout">Live analysis flags transcription slips (left) exactly. Matching typos against the 40,000-word dictionary runs in the Python engine &mdash; drop your file through <span class="mono">ingest.py</span> for that pass.</p></div>`
+    ? `<div class="card reveal"><h3>Misspellings</h3><p class="sub">needs the full dictionary</p><p class="readout">Transcription slips (left) are keystroke patterns, so they show up without a dictionary. Telling a real misspelling from a word you meant needs a 40,000-word dictionary, which is more than this page carries &mdash; so that pass isn't part of the browser version.</p></div>`
     : `<div class="card reveal"><h3>Misspellings</h3><p class="sub">matched against a 40,000-word dictionary</p><ul class="errlist">${e.likely_typos.map(t=>`<li><span class="bad mono">${esc(t.wrong)}</span> <span class="arrow">&rarr;</span> <span class="fix mono">${esc(t.suggestion)}</span></li>`).join("")}</ul><p class="readout"><strong>${esc((e.likely_typos[0]||{}).wrong||"")}</strong> is a finger-position slip, not a vocabulary gap &mdash; the wrong letters sit next to the right ones on the keyboard. A spellchecker can't tell those apart.</p></div>`;
 
   const errs = `
@@ -3040,7 +3085,7 @@ function renderMirror(p, animate){
     ? (p.segmentation==="llm"
         ? `Computed by the Python engine on your machine. A model read each document and kept only your own writing, so teacher prompts aren't counted as your voice.`
         : `Computed by the Python engine on your machine. Prompt-stripping used pattern rules &mdash; set an API key on the server for a cleaner separation.`)
-    : `Computed in your browser from what you dropped in. Prompt-stripping is heuristic; misspelling detection and rare-word rate run in the full Python engine, not here.`;
+    : `Computed in your browser from what you dropped in &mdash; nothing left this tab. Prompt-stripping is heuristic, and the two passes that need a full dictionary, misspelling detection and rare-word rate, aren't part of the browser version.`;
 
   if (animate && !REDUCED) runAnimations(); else finalizeStatic();
 }
@@ -3364,19 +3409,38 @@ async function handleFiles(files){
 
   // In-browser fallback.
   const texts = [];
+  // fail() overwrites whatever is in the error box, so the catch-all below
+  // used to replace a message that named the actual file and reason with a
+  // shrug. Whoever explained it first keeps the box.
+  let explained = false;
   for (const file of files){
+    const lower = file.name.toLowerCase();
     try {
-      if (file.name.toLowerCase().endsWith(".docx")){
+      if (lower.endsWith(".docx")){
         texts.push(docxXmlToText(await readDocx(file)));
+      } else if (lower.endsWith(".zip")){
+        // Each document in the export counts as its own document, so the
+        // phrases panel can still say how many of them a phrase turns up in.
+        const members = await readZipArchive(file);
+        if (!members.length){
+          fail(`Nothing readable in ${esc(file.name)}. An export works when it holds .docx, .txt or .md files &mdash; a zip of PDFs or photos has no text to measure.`);
+          explained = true;
+          continue;
+        }
+        members.forEach(m => texts.push(m.text));
       } else {
         texts.push(await file.text());
       }
     } catch(err){
-      fail(`Couldn't read ${file.name} in the browser. Try pasting its text instead, or run it through ingest.py for full .docx support.`);
+      fail(`Couldn't read ${esc(file.name)}. Open it, copy the text, and paste it into the box instead &mdash; that measures exactly the same way.`);
+      explained = true;
     }
   }
   const joined = texts.join("\n\n");
-  if (!joined.trim()){ return fail("Couldn't read any text from that. Paste the writing instead, or try a different file."); }
+  if (!joined.trim()){
+    if (!explained) fail("Couldn't read any text from that. Paste the writing instead, or try a different file.");
+    return;
+  }
   const profile = buildProfile(joined, {stripPrompts:true, docs: texts.length>1?texts:null});
   if (!profile){ return fail("That didn't have enough of your own writing to measure. Try a longer sample."); }
   enterApp(profile);
