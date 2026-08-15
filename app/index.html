@@ -8,6 +8,29 @@
 <script>window.STYLE_ENGINE_PAGES = "..";</script>
 
 
+<!-- The app is the link that actually gets pasted — the landing page is what
+     you send a stranger, this is what you send a friend. Without these it
+     previewed as a bare title and no picture. The card is 1200x630, drawn by
+     ads/cards.html, and lives on the static host; served from a backend on
+     localhost these tags are simply inert, since nothing is scraping it. -->
+<meta name="description" content="Drop in your schoolwork and it measures your writing back to you: sentence rhythm, the phrases you lean on, the typos that are really just your hands moving too fast. Nothing is generated. Nothing is sent anywhere.">
+<meta property="og:title" content="Style Engine — see how you actually write">
+<meta property="og:description" content="Drop in your schoolwork and it measures your writing back to you. Nothing is sent anywhere.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://lpbrochu03-cmd.github.io/style-engine/app/">
+<meta property="og:image" content="https://lpbrochu03-cmd.github.io/style-engine/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="See how you actually write — a bar chart of six sentence lengths, average 11.5 words.">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- The same mark the landing page draws, and drawn for the same reason: a page
+     that promises nothing is sent anywhere should not fetch its own tab icon
+     from anyone. Undeclared, the browser asks the HOST ROOT for /favicon.ico —
+     on a project site that is not even this project, so it 404'd on every load
+     exactly the way /account did. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314160f'/%3E%3Cpath d='M3 20 L8 20 L10 9 L13 25 L16 14 L19 22 L22 17 L25 20 L29 20' fill='none' stroke='%2374c491' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
 <script>
   /* Palette and light/dark, applied before the stylesheet is parsed. Doing this
      down with the rest of the app would repaint the whole page a moment after

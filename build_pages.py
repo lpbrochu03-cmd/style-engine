@@ -186,6 +186,8 @@ ARROW = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-widt
          'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
          '<path d="M19 12H6M11 6l-6 6 6 6"/></svg>')
 
+SITE = "https://lpbrochu03-cmd.github.io/style-engine"
+
 ICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'"
         "%3E%3Crect width='32' height='32' fill='%2314160f'/%3E%3Cpath d='M3 20 L8 20 L10 9 "
         "L13 25 L16 14 L19 22 L22 17 L25 20 L29 20' fill='none' stroke='%2374c491' "
@@ -203,7 +205,13 @@ def page(slug, title, eyebrow, stamp, body, description):
 <meta property="og:title" content="{html.escape(title)} — Style Engine">
 <meta property="og:description" content="{html.escape(description)}">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://lpbrochu03-cmd.github.io/style-engine/assets/poster-01.jpg">
+<meta property="og:url" content="{SITE}/{slug}/">
+<!-- 1200x630, drawn by ../style-engine/ads/cards.html. The poster it replaced
+     was 9:16, so every scraper cropped it to a blank band. -->
+<meta property="og:image" content="{SITE}/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="See how you actually write — a bar chart of six sentence lengths, average 11.5 words.">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{ICON}">
 <style>{CSS}</style>
