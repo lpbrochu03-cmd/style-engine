@@ -166,6 +166,12 @@ li::marker{color:var(--accent)}
 .row p{grid-area:3/1/4/3;margin:0;color:var(--ink-2);font-size:.97rem}
 .row .flag{grid-area:4/1/5/3;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--amber);margin-top:.5em}
+/* Amber is the shop's "not yet". Something you can actually buy has to look
+   different from something you can't, or the two read as one state. */
+.row .flag.open{color:var(--accent)}
+.pay-handle{font-family:var(--mono);color:var(--accent);word-break:break-all}
+.pay-steps{margin:.9em 0 0;padding-left:1.2em;color:var(--ink-2)}
+.pay-steps li{margin:.35em 0}
 
 .note{background:var(--surface);border:1px solid var(--line);border-radius:12px;
   padding:clamp(18px,4vw,26px);margin:0 0 2.4em}
@@ -311,6 +317,10 @@ def copy_shop_pictures(wanted):
 
 def build_pricing():
     data = json.load(open(os.path.join(APP, "store.json"), encoding="utf-8"))
+    # Selling by hand needs somewhere to send the money. Absent from store.json,
+    # this whole path stays off and the page reads exactly as it did before —
+    # which is the correct state until an adult's account exists to name here.
+    pay = data.get("pay") or None
     shown = [p for p in data["products"]
              if p.get("shelf") == "main" and p.get("status") != "hidden"]
     have = set(copy_shop_pictures({p["image"] for p in shown if p.get("image")}))
@@ -321,8 +331,15 @@ def build_pricing():
     for p in shown:
         price = money(p["price"], p.get("currency", "usd"))
         unit = " <small>/ month</small>" if "subscription" in p.get("tags", []) else " <small>once</small>"
-        flag = "" if p.get("status") == "live" else (
-            '<div class="flag">Not buyable yet</div>')
+        # Three states, not two. "manual" is the one that matters before there
+        # is a processor: the price is real, the thing exists, and it is bought
+        # by paying a person and being sent a key by hand.
+        if p.get("status") == "live":
+            flag = ""
+        elif p.get("status") == "manual" and pay:
+            flag = '<div class="flag open">Buy by hand &mdash; see above</div>'
+        else:
+            flag = '<div class="flag">Not buyable yet</div>'
 
         # Only if the file actually came across. A row with no picture is the
         # design, not a fallback; a row with a picture that 404s is neither.
@@ -348,14 +365,40 @@ def build_pricing():
 
     # Stated plainly at the top rather than discovered at a checkout that does
     # not work. Nothing here takes money yet and the page should say so first.
-    note = (
-        '<div class="note">'
-        '<p><strong>Nothing on this page can be bought today.</strong> Payments '
-        'need an account owned by an adult, and that is not set up yet. The '
-        'prices are real and they are what these will cost.</p>'
-        '<p>The Style Mirror is free, works now, and stays free.</p>'
-        '</div>'
-    )
+    buyable = [p for p in shown if p.get("status") in ("live", "manual")]
+    if pay and buyable:
+        # No checkout, no processor, no monthly server bill: someone pays a
+        # person and a key is issued by hand with backend/issue_key.py. It is
+        # how the first few sales happen anyway, so the page may as well say it
+        # instead of pretending the shop is shut.
+        handle = html.escape(pay.get("handle", ""))
+        service = html.escape(pay.get("service", "Venmo"))
+        contact = html.escape(pay.get("email", ""))
+        turnaround = html.escape(pay.get("turnaround", "within a day"))
+        steps = [f'<li>Send the price below to <span class="pay-handle">{handle}</span> '
+                 f'on {service}.</li>',
+                 '<li>Put the name of the thing you are buying in the note.</li>']
+        if contact:
+            steps.append(f'<li>Email <span class="pay-handle">{contact}</span> from the '
+                         'address you want the key sent to.</li>')
+        parts = ['<div class="note">',
+                 '<p><strong>Buying works, but it is done by hand.</strong> There is no '
+                 'checkout on this page yet &mdash; you pay a person, and a key comes '
+                 f'back to you {turnaround}.</p>',
+                 '<ol class="pay-steps">', "".join(steps), '</ol>']
+        if pay.get("note"):
+            parts.append(f'<p>{html.escape(pay["note"])}</p>')
+        parts.append('<p>The Style Mirror is free, works now, and stays free.</p></div>')
+        note = "".join(parts)
+    else:
+        note = (
+            '<div class="note">'
+            '<p><strong>Nothing on this page can be bought today.</strong> Payments '
+            'need an account owned by an adult, and that is not set up yet. The '
+            'prices are real and they are what these will cost.</p>'
+            '<p>The Style Mirror is free, works now, and stays free.</p>'
+            '</div>'
+        )
 
     body = note + '<ul class="rows">' + "".join(rows) + "</ul>"
     write("pricing", page(

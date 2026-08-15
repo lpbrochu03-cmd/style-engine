@@ -90,6 +90,12 @@ li::marker{color:var(--accent)}
 .row p{grid-area:3/1/4/3;margin:0;color:var(--ink-2);font-size:.97rem}
 .row .flag{grid-area:4/1/5/3;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--amber);margin-top:.5em}
+/* Amber is the shop's "not yet". Something you can actually buy has to look
+   different from something you can't, or the two read as one state. */
+.row .flag.open{color:var(--accent)}
+.pay-handle{font-family:var(--mono);color:var(--accent);word-break:break-all}
+.pay-steps{margin:.9em 0 0;padding-left:1.2em;color:var(--ink-2)}
+.pay-steps li{margin:.35em 0}
 
 .note{background:var(--surface);border:1px solid var(--line);border-radius:12px;
   padding:clamp(18px,4vw,26px);margin:0 0 2.4em}
