@@ -88,69 +88,106 @@ def markdown(src):
 
 
 # ---------------------------------------------------------------------------
-# The shell. Inlined rather than linked: these pages are small enough that a
+# The look. Inlined rather than linked: these pages are small enough that a
 # second request for the stylesheet would cost more than the bytes it saves,
 # and every page on this site is meant to stand up on its own.
+#
+# The palette, faces, motion vocabulary and shared controls are NOT written
+# here any more. They live in the app repo's theme.css and are read in, the
+# same one-directional way this file already reads PRIVACY.md, TERMS.md and
+# store.json. Before that, the colours were written out four separate times —
+# here, in index.html, in 404.html and in the app — and had already drifted:
+# this file's copy had lost the light half and four of the five palettes.
 # ---------------------------------------------------------------------------
 
-CSS = """
-:root{
-  --ground:#14160f;--surface:#1c1e16;--ink:#ecefe0;--ink-2:#b4b8a4;--ink-3:#7f8472;
-  --line:#2f3325;--accent:#74c491;--amber:#d2a54c;
-  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,"SF Mono",Consolas,"Liberation Mono",monospace;
-  --gutter:clamp(20px,5.5vw,64px);
-}
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
-  font-size:clamp(16px,1.02rem+.2vw,18px);line-height:1.68;-webkit-font-smoothing:antialiased}
-a{color:var(--accent)}
-:focus-visible{outline:2.5px solid var(--accent);outline-offset:3px;border-radius:2px}
+# Two files, because the app takes the first and not the second. theme.css is
+# nothing but custom properties, @font-face and @keyframes, so it is safe to
+# inline anywhere; theme-site.css applies them, and its `.btn` would otherwise
+# turn all forty-nine of the app's instrument buttons into the site's pills.
+THEME = os.path.join(APP, "theme.css")
+THEME_SITE = os.path.join(APP, "theme-site.css")
 
-.bar{position:sticky;top:0;z-index:5;background:rgba(20,22,15,.86);
-  backdrop-filter:blur(9px);border-bottom:1px solid var(--line)}
+
+def _read(path):
+    if not os.path.exists(path):
+        sys.exit(f"missing {path} — is the app repo beside this one?")
+    return open(path, encoding="utf-8").read()
+
+
+def theme_css(assets):
+    """The full stylesheet every site page starts with, with its one
+    build-time hole filled.
+
+    `assets` is the path from the page being written back to /assets. It cannot
+    be baked in because the pages sit at different depths: the landing page and
+    404 are at the root, everything generated here is one folder down. Getting
+    it wrong costs the fonts silently — the page still renders, in the fallback
+    stack, looking almost right.
+    """
+    return (_read(THEME) + _read(THEME_SITE)).replace("__ASSETS__", assets)
+
+
+# What is left here is only what a page of text and a price list need. Anything
+# another page also uses belongs in theme.css instead.
+PAGE_CSS = """
+.bar{position:sticky;top:0;z-index:5;
+  background:color-mix(in srgb, var(--ground) 82%, transparent);
+  backdrop-filter:blur(12px) saturate(1.1);
+  border-bottom:1px solid var(--line);
+  transition:border-color var(--dur-2) var(--ease-out)}
 .bar-in{max-width:760px;margin:0 auto;padding:14px var(--gutter);
   display:flex;align-items:center;justify-content:space-between;gap:16px}
-.home{font-family:var(--mono);font-size:12px;letter-spacing:.15em;text-transform:uppercase;
-  color:var(--ink-2);text-decoration:none;display:inline-flex;align-items:center;gap:.6em}
+.home{font-family:var(--mono);font-size:var(--t-xs);letter-spacing:var(--track-mono);
+  text-transform:uppercase;color:var(--ink-2);text-decoration:none;
+  display:inline-flex;align-items:center;gap:.6em;
+  transition:color var(--dur-2) var(--ease-out)}
 .home:hover{color:var(--accent)}
-.home svg{width:1em;height:1em}
+/* The arrow leads the eye back the way the link goes. Transform only, so it
+   cannot nudge the text beside it. */
+.home svg{width:1em;height:1em;transition:transform var(--dur-2) var(--ease-out)}
+.home:hover svg{transform:translateX(-3px)}
 .bar-right{display:flex;align-items:center;gap:16px}
-.bar-shop{font:600 14px/1 var(--sans);color:var(--ink-2);text-decoration:none;
-  display:inline-flex;align-items:center;min-height:34px;padding:0 4px}
+.bar-shop{font:600 var(--t-sm)/1 var(--sans);color:var(--ink-2);text-decoration:none;
+  display:inline-flex;align-items:center;min-height:34px;padding:0 4px;
+  transition:color var(--dur-2) var(--ease-out)}
 .bar-shop:hover{color:var(--accent)}
-.bar-try{font:600 14px/1 var(--sans);color:var(--ground);background:var(--accent);
-  padding:9px 16px;border-radius:999px;text-decoration:none;white-space:nowrap}
-.bar-try:hover{background:#8ad4a5}
+/* Geometry only — the fill, hover, press and glow come from theme.css so this
+   button behaves identically to the one on the landing page. */
+.bar-try{font-size:var(--t-sm);padding:9px 16px;white-space:nowrap}
 
-main{max-width:760px;margin:0 auto;padding:clamp(48px,10vw,96px) var(--gutter) clamp(60px,12vw,120px)}
-.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--accent);margin:0 0 1.3em;display:flex;align-items:center;gap:.75em}
+main{max-width:760px;margin:0 auto;
+  padding:clamp(48px,10vw,96px) var(--gutter) clamp(60px,12vw,120px)}
+.eyebrow{font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.18em;
+  text-transform:uppercase;color:var(--accent);margin:0 0 1.3em;
+  display:flex;align-items:center;gap:.75em}
 .eyebrow::before{content:"";width:clamp(18px,6vw,34px);height:2px;background:var(--amber);flex:none}
-h1{font-weight:800;font-size:clamp(2.3rem,8vw,3.6rem);line-height:1;letter-spacing:-.038em;
-  margin:0 0 .5em;text-wrap:balance}
-.stamp{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);margin:0 0 2.6em;
+h1{font-weight:700;font-size:clamp(2.3rem,8vw,3.6rem);line-height:1;margin:0 0 .5em}
+.stamp{font-family:var(--mono);font-size:var(--t-xs);color:var(--ink-3);margin:0 0 2.6em;
   padding-bottom:1.6em;border-bottom:1px solid var(--line)}
-h2{font-weight:750;font-size:clamp(1.32rem,4.6vw,1.72rem);line-height:1.18;letter-spacing:-.02em;
-  margin:2.5em 0 .7em}
+h2{font-weight:600;font-size:var(--t-2xl);line-height:1.18;margin:2.5em 0 .7em}
 h2:first-of-type{margin-top:0}
-h3{font-weight:700;font-size:1.1rem;margin:2em 0 .5em}
+h3{font-weight:600;font-size:1.1rem;margin:2em 0 .5em}
 p{margin:0 0 1.15em}
 strong{color:var(--ink);font-weight:650}
 em{color:var(--ink-2)}
 code{font-family:var(--mono);font-size:.9em;background:var(--surface);
-  border:1px solid var(--line);border-radius:5px;padding:.12em .42em}
+  border:1px solid var(--line);border-radius:var(--radius-sm);padding:.12em .42em}
 ul{margin:0 0 1.3em;padding-left:1.15em}
 li{margin-bottom:.5em}
 li::marker{color:var(--accent)}
+/* Body links get the shared treatment; scoped to main so the nav and footer,
+   which have their own, are left alone. */
+main a{color:var(--accent);text-decoration:none;
+  border-bottom:1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  transition:border-color var(--dur-2) var(--ease-out)}
+main a:hover{border-bottom-color:currentColor}
 
 /* Prices. A row per thing, the number set in the mono face because it is a
    figure to compare, not a sentence to read. */
 .rows{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
 .row{border-bottom:1px solid var(--line);padding:clamp(20px,4.6vw,30px) 0;
   display:grid;gap:.35em .9em;grid-template-columns:1fr auto}
-.row h2{grid-area:1/1/2/2;margin:0;font-size:clamp(1.15rem,4.2vw,1.4rem)}
+.row h2{grid-area:1/1/2/2;margin:0;font-size:var(--t-xl)}
 .row .price{grid-area:1/2/2/3;font-family:var(--mono);font-size:clamp(1rem,3.6vw,1.15rem);
   color:var(--ink);white-space:nowrap;align-self:baseline}
 .row .price small{color:var(--ink-3);font-size:.76em}
@@ -159,13 +196,26 @@ li::marker{color:var(--accent)}
    nobody scrolls to. Width and height are on the tag so the row does not
    jump when it loads. */
 .row .shot{grid-area:2/1/3/3;display:block;margin:.2em 0 .95em;max-width:560px;
-  border:1px solid var(--line);border-radius:4px;overflow:hidden;line-height:0}
+  border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;line-height:0;
+  border-bottom:1px solid var(--line);
+  transition:border-color var(--dur-2) var(--ease-out),
+             box-shadow var(--dur-3) var(--ease-out),
+             transform var(--dur-3) var(--ease-out)}
 .row .shot img{display:block;width:100%;height:auto;max-height:290px;
-  object-fit:cover;object-position:top left}
-.row .shot:hover{border-color:var(--ink-3)}
+  object-fit:cover;object-position:top left;
+  transition:transform var(--dur-4) var(--ease-out)}
+/* The row lifts and the picture inside it pushes very slightly past its frame:
+   two speeds on one gesture, which is what stops it reading as a flat swap. */
+.row .shot:hover{border-color:var(--ink-3);box-shadow:var(--elev-2);transform:translateY(-2px)}
+.row .shot:hover img{transform:scale(1.02)}
 .row p{grid-area:3/1/4/3;margin:0;color:var(--ink-2);font-size:.97rem}
 .row .flag{grid-area:4/1/5/3;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--amber);margin-top:.5em}
+  text-transform:uppercase;color:var(--amber);margin-top:.5em;
+  display:inline-flex;align-items:center;gap:.55em}
+/* A dot before the state, because "not yet" and "buy by hand" differ only by
+   colour otherwise, and colour alone is not a distinction everyone can see. */
+.row .flag::before{content:"";width:5px;height:5px;border-radius:50%;
+  background:currentColor;flex:none;box-shadow:0 0 8px currentColor}
 /* Amber is the shop's "not yet". Something you can actually buy has to look
    different from something you can't, or the two read as one state. */
 .row .flag.open{color:var(--accent)}
@@ -173,19 +223,27 @@ li::marker{color:var(--accent)}
 .pay-steps{margin:.9em 0 0;padding-left:1.2em;color:var(--ink-2)}
 .pay-steps li{margin:.35em 0}
 
-.note{background:var(--surface);border:1px solid var(--line);border-radius:12px;
-  padding:clamp(18px,4vw,26px);margin:0 0 2.4em}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:clamp(18px,4vw,26px);margin:0 0 2.4em;box-shadow:var(--elev-1)}
 .note p:last-child{margin-bottom:0}
 
 footer{border-top:1px solid var(--line);padding:clamp(34px,7vw,56px) var(--gutter);
-  color:var(--ink-3);font-size:14px}
+  color:var(--ink-3);font-size:var(--t-sm)}
 .foot-in{max-width:760px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 26px;
   justify-content:space-between}
 footer a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line);
-  display:inline-flex;align-items:center;min-height:26px}
+  display:inline-flex;align-items:center;min-height:26px;
+  transition:color var(--dur-2) var(--ease-out),border-color var(--dur-2) var(--ease-out)}
 footer a:hover{color:var(--accent);border-bottom-color:currentColor}
 .foot-nav{display:flex;gap:14px 22px;flex-wrap:wrap;align-items:center}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* These pages are text, so the entrance is the page arriving rather than each
+   paragraph doing something on scroll. One gesture, once. */
+main>*{animation:se-rise var(--dur-4) var(--ease-out) both}
+main>*:nth-child(1){animation-delay:.02s}
+main>*:nth-child(2){animation-delay:.06s}
+main>*:nth-child(3){animation-delay:.10s}
+main>*:nth-child(n+4){animation-delay:.14s}
 """
 
 ARROW = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" '
@@ -195,8 +253,8 @@ ARROW = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-widt
 SITE = "https://lpbrochu03-cmd.github.io/style-engine"
 
 ICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'"
-        "%3E%3Crect width='32' height='32' fill='%2314160f'/%3E%3Cpath d='M3 20 L8 20 L10 9 "
-        "L13 25 L16 14 L19 22 L22 17 L25 20 L29 20' fill='none' stroke='%2374c491' "
+        "%3E%3Crect width='32' height='32' fill='%23080a05'/%3E%3Cpath d='M3 20 L8 20 L10 9 "
+        "L13 25 L16 14 L19 22 L22 17 L25 20 L29 20' fill='none' stroke='%237fd39f' "
         "stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
 
 
@@ -220,7 +278,10 @@ def page(slug, title, eyebrow, stamp, body, description):
 <meta property="og:image:alt" content="See how you actually write — a bar chart of six sentence lengths, average 11.5 words.">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{ICON}">
-<style>{CSS}</style>
+<!-- Set before the stylesheet so the reveal rules only ever apply where there
+     is a script alive to undo them. -->
+<script>document.documentElement.className+=' js'</script>
+<style>{theme_css("../assets")}{PAGE_CSS}</style>
 </head>
 <body>
 
@@ -408,11 +469,50 @@ def build_pricing():
         "What Style Engine Pro and the other things cost. The Style Mirror is free."))
 
 
+# ---------------------------------------------------------------------------
+# The two hand-written pages.
+#
+# index.html and 404.html are edited by hand and always will be — they are the
+# argument, not a rendering of something else. But they need the same palette,
+# faces and motion as everything else, and copying it in is how it drifted the
+# first time. So they carry a pair of markers, and this rewrites what is
+# between them. Everything outside the markers is left exactly as written.
+# ---------------------------------------------------------------------------
+
+START = "/* @theme:start — generated by build_pages.py; edit theme.css instead */"
+END = "/* @theme:end */"
+
+
+def sync_theme(name, assets):
+    path = os.path.join(HERE, name)
+    if not os.path.exists(path):
+        print(f"  {name}: not here, skipped")
+        return
+    src = open(path, encoding="utf-8").read()
+    a, b = src.find(START), src.find(END)
+    if a == -1 or b == -1:
+        # Loud rather than silent: a page that quietly stops being themed looks
+        # almost right, which is the hardest kind of wrong to notice.
+        print(f"  {name}: NO THEME MARKERS — not themed. Add {START} / {END}")
+        return
+    block = START + "\n" + theme_css(assets) + "\n" + END
+    out = src[:a] + block + src[b + len(END):]
+    if out == src:
+        print(f"  {name}  (already current)")
+        return
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(out)
+    print(f"  {name}  ({len(out)/1000:.1f} KB)")
+
+
 if __name__ == "__main__":
-    print("building:")
+    print("generated pages:")
     build_doc("privacy", "PRIVACY.md", "The short version: almost nothing",
               "What Style Engine keeps, what it sends elsewhere, and how to get rid of it.")
     build_doc("terms", "TERMS.md", "Plain terms",
               "What Style Engine is, what it will not do, and the rules for using it.")
     build_pricing()
+    print("hand-written pages, theme block:")
+    sync_theme("index.html", "assets")
+    sync_theme("404.html", "assets")
     print("done.")
