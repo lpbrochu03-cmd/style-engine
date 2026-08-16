@@ -29,7 +29,7 @@
      from anyone. Undeclared, the browser asks the HOST ROOT for /favicon.ico —
      on a project site that is not even this project, so it 404'd on every load
      exactly the way /account did. -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314160f'/%3E%3Cpath d='M3 20 L8 20 L10 9 L13 25 L16 14 L19 22 L22 17 L25 20 L29 20' fill='none' stroke='%2374c491' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23080a05'/%3E%3Cpath d='M3 20 L8 20 L10 9 L13 25 L16 14 L19 22 L22 17 L25 20 L29 20' fill='none' stroke='%237fd39f' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 
 <script>
   /* Palette and light/dark, applied before the stylesheet is parsed. Doing this
@@ -2403,15 +2403,62 @@ function renderFeedbackLLM(data, text){
 
 /* ================= look =================
    Five palettes, each a surface someone actually writes on or measures with.
-   The preview chips are drawn from this table rather than from the stylesheet,
-   so the swatch you click is the colour you get. */
-const PALETTES = [
-  { id:"sage",      name:"Sage — drafting table",  light:["#e7e8e0","#2b6141","#191b14"], dark:["#14160f","#74c491","#ecefe0"] },
-  { id:"newsprint", name:"Newsprint — grey stock", light:["#e6e5e1","#22222a","#17171a"], dark:["#131316","#e8e6df","#eceae4"] },
-  { id:"blueprint", name:"Blueprint — cyanotype",  light:["#eaeef4","#1b4f8f","#10192b"], dark:["#0b1f38","#7fb2f0","#e8f0fb"] },
-  { id:"ink",       name:"Ink — fountain pen",     light:["#ecebf0","#55408c","#1a1725"], dark:["#131120","#a48ce8","#ece9f5"] },
-  { id:"slate",     name:"Slate — instrument",     light:["#e4e6e7","#35586b","#14181a"], dark:["#101315","#8fb4c9","#e9edef"] },
+
+   The swatches used to carry their own copy of every colour, with a comment
+   claiming that made "the swatch you click the colour you get". It did the
+   opposite: when the palettes were darkened in theme.css this table was not,
+   so every chip advertised a ground the app no longer had. A preview drawn
+   from a second copy of the data is a preview that can lie.
+
+   They are now read out of the stylesheet itself. The custom properties are
+   declared on `:root[data-palette="…"]` rules, which only ever match the root
+   element, so a hidden probe element cannot resolve them — the values have to
+   come from the CSSOM. The sheet is inlined in this document, so there is no
+   cross-origin rule to trip over.
+
+   Falls back to the palette's live computed value if the lookup finds nothing,
+   which keeps a chip rendering rather than blank. */
+const PALETTE_NAMES = [
+  { id:"sage",      name:"Sage — drafting table"  },
+  { id:"newsprint", name:"Newsprint — grey stock" },
+  { id:"blueprint", name:"Blueprint — cyanotype"  },
+  { id:"ink",       name:"Ink — fountain pen"     },
+  { id:"slate",     name:"Slate — instrument"     },
 ];
+
+/* Every :root rule that declares this palette, newest last so a later
+   override wins the same way the cascade would. */
+function paletteRules(id) {
+  const want = id === "sage" ? [':root', `:root[data-palette="${id}"]`]
+                             : [`:root[data-palette="${id}"]`];
+  const out = [];
+  for (const sheet of document.styleSheets) {
+    let rules;
+    try { rules = sheet.cssRules; } catch (e) { continue; }   // foreign sheet
+    if (!rules) continue;
+    for (const rule of rules) {
+      if (!rule.selectorText) continue;
+      const sels = rule.selectorText.split(",").map(s => s.trim());
+      if (sels.some(s => want.includes(s))) out.push(rule.style);
+    }
+  }
+  return out;
+}
+
+function paletteSwatch(id, dark) {
+  const prefix = dark ? "--d-" : "--l-";
+  const rules = paletteRules(id);
+  const read = (name) => {
+    for (let i = rules.length - 1; i >= 0; i--) {
+      const v = rules[i].getPropertyValue(prefix + name).trim();
+      if (v) return v;
+    }
+    return "";
+  };
+  const live = getComputedStyle(document.documentElement);
+  return ["ground", "accent", "ink"].map(
+    n => read(n) || live.getPropertyValue("--" + n).trim() || "transparent");
+}
 const PALETTE_STORE = "style-engine-palette";
 // Versioned; see the note in the head script. Bumping it retires every theme
 // choice made while light was the default.
@@ -2431,8 +2478,8 @@ function renderChips(){
   const host = $("#chips");
   if (!host) return;
   const current = savedPalette(), dark = darkNow();
-  host.innerHTML = PALETTES.map(p => {
-    const [ground, accent, ink] = dark ? p.dark : p.light;
+  host.innerHTML = PALETTE_NAMES.map(p => {
+    const [ground, accent, ink] = paletteSwatch(p.id, dark);
     return `<button class="chip" role="radio" data-palette="${p.id}" title="${esc(p.name)}"
       aria-label="${esc(p.name)}" aria-checked="${p.id === current}">
       <i style="background:${ground}"></i><i style="background:${accent}"></i><i style="background:${ink}"></i>
