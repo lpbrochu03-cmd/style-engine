@@ -1691,7 +1691,7 @@
            it read as an afterthought. -->
       <button role="tab" data-panel="mirror" aria-current="true" data-side="service">Style Mirror <span class="tally" id="tallyDocs">&mdash;</span></button>
       <button role="tab" data-panel="compose" data-side="service">Write in my voice <span class="tally">voice</span></button>
-      <button role="tab" data-panel="feedback" data-side="service">Draft Feedback <span class="tally">1</span></button>
+      <button role="tab" data-panel="feedback" data-side="service">Draft Feedback <span class="tally"></span></button>
       <!-- The tally is filled by renderWork() from what you've actually added. -->
       <button role="tab" data-panel="queue" data-side="service">Assignments <span class="tally"></span></button>
       <button role="tab" data-panel="prep" data-side="service">Test Prep <span class="tally"></span></button>
@@ -2333,11 +2333,12 @@ function analyzeDraft(text){
 function renderFeedback(text, note){
   const a = analyzeDraft(text);
   const res = $("#fbResult");
-  if(!a){ res.innerHTML = `<div class="card"><p class="readout">Paste at least a couple of sentences you wrote, so there's something to measure.</p></div>`; return; }
+  if(!a){ setTally("feedback", 0); res.innerHTML = `<div class="card"><p class="readout">Paste at least a couple of sentences you wrote, so there's something to measure.</p></div>`; return; }
   // The in-browser scorer is the weaker of the two. When it's standing in for
   // the model-graded pass, say so — silently serving the lesser version as if
   // it were the same thing is how a demo starts lying about what it is.
   const standin = note ? `<div class="card"><p class="readout">${esc(note)}</p></div>` : "";
+  setTally("feedback", a.fixes.length);
   res.innerHTML = standin + `
     <div class="card"><h3>Your draft</h3><p class="sub">${a.sents} sentences &middot; ${a.m}-word average &middot; amber underline = a sentence running long for this piece</p>
       <p class="draft">${a.draftHTML}</p></div>
@@ -2398,6 +2399,7 @@ function renderFeedbackLLM(data, text){
   const fixes = `<div class="card"><h3>What to fix, and how</h3><p class="sub">specific changes to your own words</p>
     <div class="fixes">${(data.fixes || []).map((f, i) => `<div class="fix"><span class="n">${i + 1}</span><div class="body"><b>${esc(f.title)}</b> ${esc(f.detail)}</div></div>`).join("")}</div>
     <p class="readout">${esc(data.summary || "")}</p></div>`;
+  setTally("feedback", (data.fixes || []).length);
   $("#fbResult").innerHTML = draftCard + rubric + fixes;
 }
 
@@ -2521,8 +2523,7 @@ async function loadStore(){
     return;
   }
   const products = data.products || [];
-  const tally = document.querySelector('.nav button[data-panel="store"] .tally');
-  if (tally) tally.textContent = products.length ? String(products.length) : "";
+  setTally("store", products.length);
   const shop = data.shop || {};
   if (shop.tagline) $("#shopTagline").textContent = shop.tagline;
 
@@ -2955,8 +2956,7 @@ function renderWork(){
   const soon = todo.filter(r => { const n = daysOut(r.due); return n !== null && n >= 0 && n <= 1; }).length;
   const late = todo.filter(r => { const n = daysOut(r.due); return n !== null && n < 0; }).length;
 
-  const tally = document.querySelector('.nav button[data-panel="queue"] .tally');
-  if (tally) tally.textContent = todo.length ? String(todo.length) : "";
+  setTally("queue", todo.length);
 
   $("#qzProgress").innerHTML = !rows.length ? "" : `
     <div class="card">
@@ -3486,6 +3486,14 @@ function renderUpgrade(host, feature, detail){
 /* ================= render ================= */
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+// Every channel's tally reads the same way: how many of the thing is in that
+// panel right now, and nothing at all when the panel is empty. Written out
+// three times before, which is how Draft Feedback's came to be the literal 1
+// that shipped on the live app — a readout that was never wired to anything.
+function setTally(panel, n){
+  const el = document.querySelector(`.nav button[data-panel="${panel}"] .tally`);
+  if (el) el.textContent = n ? String(n) : "";
+}
 const pct = (v,max) => max ? Math.round(v/max*1000)/10 : 0;
 
 function readouts(p){
